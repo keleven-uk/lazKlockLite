@@ -19,7 +19,8 @@ object frmlazKlockLite: TfrmlazKlockLite
     Left = 0
     Height = 30
     Top = 0
-    Width = 612
+    Width = 633
+    Align = alTop
     Caption = 'ledKlock'
     Columns = 36
     OffColor = 930866
@@ -27,6 +28,7 @@ object frmlazKlockLite: TfrmlazKlockLite
   end
   object tmrKlock: TECTimer
     Delay = 1000
+    Repeating = 250
     OnTimer = tmrKlockTimer
     left = 70
     top = 182
@@ -34,6 +36,31 @@ object frmlazKlockLite: TfrmlazKlockLite
   object PopupMenu1: TPopupMenu
     left = 192
     top = 40
+    object mnItmScroll: TMenuItem
+      AutoCheck = True
+      Caption = 'Scroll'
+      Checked = True
+    end
+    object mnItmMonitorAwake: TMenuItem
+      AutoCheck = True
+      Caption = 'Monitor Awake'
+      Checked = True
+    end
+    object mnItmReload: TMenuItem
+      Caption = 'Reload'
+      OnClick = mnItmReloadClick
+    end
+    object MenuItem1: TMenuItem
+      Caption = '-'
+    end
+    object mnItmAbout: TMenuItem
+      Caption = 'About'
+      OnClick = mnItmAboutClick
+    end
+    object mnItmLicence: TMenuItem
+      Caption = 'Licence'
+      OnClick = mnItmLicenceClick
+    end
     object mnItmClose: TMenuItem
       Caption = 'Close'
       OnClick = mnItmCloseClick

@@ -1,5 +1,25 @@
 unit ulazKlockLite;
 
+{
+# lazKlockLite
+
+A light version of Klock, only contains a LED klock.
+
+But, also contains a countdown to a given event i.e. retirement.
+The events are held in a text file, events.txt.
+The entry should be in the form event, date, time.
+If no date and time are given the event test is just displayed.
+
+Also, contains the code to simulate the pressing of F15 - to keep monitors awake.
+
+
+You may copy, distribute and modify the software as long as you
+track changes/dates in source files. Any modifications to or software
+including via compiler) GPL-licensed code must also be made available
+under the GPL along with build & install instructions.
+
+}
+
 {$mode objfpc}{$H+}
 
 interface
@@ -7,19 +27,29 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Menus, ECSpinCtrls,
   strUtils, dateUtils, VpLEDLabel, Windows, LMessages, LCLType, typinfo,
-  MouseAndKeyInput, LCLVersion;
+  MouseAndKeyInput, LCLVersion, uOptions, formAbout, formLicence;
 
 type
 
   { TfrmlazKlockLite }
 
   TfrmlazKlockLite = class(TForm)
-    mnItmClose: TMenuItem;
-    PopupMenu1: TPopupMenu;
-    tmrKlock: TECTimer;
-    ledKlock: TVpLEDLabel;
+    MenuItem1        : TMenuItem;
+    mnItmLicence     : TMenuItem;
+    mnItmAbout       : TMenuItem;
+    mnItmReload      : TMenuItem;
+    mnItmMonitorAwake: TMenuItem;
+    mnItmScroll      : TMenuItem;
+    mnItmClose       : TMenuItem;
+    PopupMenu1       : TPopupMenu;
+    tmrKlock         : TECTimer;
+    ledKlock         : TVpLEDLabel;
+
     procedure FormDestroy(Sender: TObject);
+    procedure mnItmAboutClick(Sender: TObject);
     procedure mnItmCloseClick(Sender: TObject);
+    procedure mnItmLicenceClick(Sender: TObject);
+    procedure mnItmReloadClick(Sender: TObject);
     procedure tmrKlockTimer(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -31,14 +61,21 @@ type
     procedure loadEvents;
     procedure MouseHook(Sender: TObject; Msg: Cardinal);
     procedure pressF15;
+    procedure setDisplay;
     function everyMinute(myNow: TdateTime; mins: integer): Boolean;
   public
 
   end;
 
+CONST
+  NO_OF_COLUMNS = 50;
 var
   frmlazKlockLite: TfrmlazKlockLite;
+  userOptions    : Options;
+  appStartTime   : int64;          //  used by formAbout to determine how long the app has been running.
   lines          : TStringList;
+  scrollPos      : integer;
+
 implementation
 
 {$R *.lfm}
@@ -55,16 +92,24 @@ end;
 procedure TfrmlazKlockLite.FormDestroy(Sender: TObject);
 begin
   // To prevent possible system resource leaks
-  Application.RemoveOnUserInputHandler(@MouseHook)
+  Application.RemoveOnUserInputHandler(@MouseHook);
+
+  //userOptions.writeCurrentOptions;  // write out options file.
+  //userOptions.Free;
 end;
 
 procedure TfrmlazKlockLite.FormCreate(Sender: TObject);
 begin
   Application.AddOnUserInputHandler(@MouseHook);
 
+  appStartTime := GetTickCount64;  //  tick count when application starts.
+  userOptions  := Options.Create;  // create options file as c:\Users\<user>\AppData\Local\Stub\Options.xml
+
   lines            := TStringList.create;
   tmrKlock.Enabled := true;
   ledKlock.Caption := FormatDateTime('hh:nn', now);
+  scrollPos        := 1;
+
   loadEvents;
   tmrKlockTimer(Sender);
 end;
@@ -111,11 +156,7 @@ begin
     //  no events file - complain silently
   end;
 
-  ledKlock.Rows    := lines.Count + 1;
-  ledKlock.Columns := 50;
-
-  frmlazKlockLite.Width  := ledKlock.Width;
-  frmlazKlockLite.Height := ledKlock.Height;
+  setDisplay;
 end;
 //
 //............................. timer ..........................................
@@ -127,10 +168,17 @@ var
   sTime   : string;
   line    : string;
   eName   : string;
+  flag    : boolean;
   eDate   : TDateTime;
   timediff: TDateTime;
 begin
-  sTime   := PadRight(FormatDateTime('hh:nn:ss', now), 10);
+  setDisplay;
+
+  if mnItmScroll.Checked then
+    sTime   := FormatDateTime('hh:nn:ss', now)
+  else
+    sTime   := PadRight(FormatDateTime('hh:nn:ss', now), 10);
+
   display := format('%s : %s', [sTime, FormatDateTime('ddd dd MMM YYYY', now)]);
 
   if lines.Count <> 0 then
@@ -138,21 +186,51 @@ begin
     for line in lines do
     begin
       split := line.Split(',');
-      eName := PadRight(split[0], 10);
-      eDate := StrToDate(split[1]) + StrToTime(split[2]);
 
-      timeDiff := eDate - Now;
-      display  += lineEnding + Format('%s : %d days %s',
+      try
+        eDate    := StrToDate(split[1]) + StrToTime(split[2]);
+        timeDiff := eDate - Now;
+        flag     := true;
+      except  //  no date ot time set.
+        flag := false;
+      end;
+
+
+      if mnItmScroll.Checked then
+      begin
+        eName := split[0];
+        display += '    ';
+      end
+      else
+      begin
+        eName := PadRight(split[0], 10);
+        display += lineEnding;
+      end;
+
+      if flag then
+        display  += Format('%s : %d days %s',
                          [eName,
                           trunc(timediff),
-                          FormatDateTime('h" hrs "n" min "s" secs"', timediff)]);
+                          FormatDateTime('h" hrs "n" mins "s" secs"', timediff)])
+      else  //  no date or time set - so just use name.
+        display  += eName;
+
     end;
   end;
 
-  ledKlock.Caption := display;
+  if mnItmScroll.Checked then
+  begin
+    display := display + '    ' + display;
+    ledKlock.Caption := Copy(display, scrollPos, NO_OF_COLUMNS);
+
+    inc(scrollPos);
+    if scrollPos > (length(display) / 2) then scrollPos := 1;
+  end
+  else
+    ledKlock.Caption := display;
 
   {  if system is idle, then keep monitor awake if required.    }
-  if everyMinute(Now, 8) then pressF15;
+  if mnItmMonitorAwake.Checked and everyMinute(Now, 8) then pressF15;
 end;
 //
 //.................................... Menu ....................................
@@ -161,8 +239,29 @@ procedure TfrmlazKlockLite.mnItmCloseClick(Sender: TObject);
 begin
   close;
 end;
+
+procedure TfrmlazKlockLite.mnItmLicenceClick(Sender: TObject);
+begin
+  frmLicence := TfrmLicence.Create(Nil);  //frmLicence is created
+  frmLicence.ShowModal;                   //frmLicence is displayed
+  FreeAndNil(frmLicence);                 //frmLicence is release
+end;
+
+procedure TfrmlazKlockLite.mnItmReloadClick(Sender: TObject);
+{  Reload the events text file.    }
+begin
+  loadEvents;
+end;
+
+procedure TfrmlazKlockLite.mnItmAboutClick(Sender: TObject);
+begin
+  frmAbout := TfrmAbout.Create(Nil);  //frmAbout is created
+  frmAbout.ShowModal;                 //frmAbout is displayed
+  FreeAndNil(frmAbout);               //frmAbout is release
+end;
+
 //
-//
+//..................................... Helper Routines ........................
 //
 function TfrmlazKlockLite.everyMinute(myNow: TdateTime; mins: integer): Boolean;
 {  Returns true if the current minutes is a multiple of the supplied minute.
@@ -187,5 +286,22 @@ begin
   KeyInput.Press(VK_F15);                // This will simulate press of <CTRL F15> key.
   KeyInput.Unapply([ssCtrl]);
 end;
+
+procedure TfrmlazKlockLite.setDisplay;
+{  Sets up the display depending weather the message will be scrolling
+   or multi-line, this is set by a menu item.
+}
+begin
+  if mnItmScroll.Checked then
+    ledKlock.Rows    := 1
+  else
+    ledKlock.Rows    := lines.Count + 1;
+
+  ledKlock.Columns := NO_OF_COLUMNS;
+
+  frmlazKlockLite.Width  := ledKlock.Width;
+  frmlazKlockLite.Height := ledKlock.Height;
+end;
+
 end.
 

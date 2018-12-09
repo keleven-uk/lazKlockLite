@@ -11,3 +11,16 @@ The events are held in a text file, events.txt
 
 Also, contains the code to simulate the pressing of F15 - to keep monitors awake.
 
+
+Build 2
+
+Added formAbout & formLicence.
+Added uOptions & uLazKlockLite - so properties work.
+
+Added to uLaxKlockLite - Ability to scroll text or stack text.  Menu item.
+Added to uLaxKlockLite - Ability to add a event with no date or time.
+Added to uLaxKlockLite - menu items to call about and licence forms.
+
+
+
+
