@@ -17,8 +17,8 @@
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <BuildNr Value="2"/>
-      <StringTable Comments="lazKlockLite@keleven.co.uk" CompanyName="www.keleven.co.uk" FileDescription="A light version of Klock, only contains a LED klock" InternalName="LazKlockLite" LegalCopyright="(c) Kevin Scott 2018" OriginalFilename="LazKlockLite" ProductName="LazKlockLite" ProductVersion="Build 2"/>
+      <BuildNr Value="3"/>
+      <StringTable Comments="lazKlockLite@keleven.co.uk" CompanyName="www.keleven.co.uk" FileDescription="A light version of Klock, only contains a LED klock" InternalName="LazKlockLite" LegalCopyright="(c) Kevin Scott 2018 - 19" OriginalFilename="LazKlockLite" ProductName="LazKlockLite" ProductVersion="Build 3"/>
     </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>

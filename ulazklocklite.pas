@@ -7,11 +7,16 @@ A light version of Klock, only contains a LED klock.
 
 But, also contains a countdown to a given event i.e. retirement.
 The events are held in a text file, events.txt.
-The entry should be in the form event, date, time.
+The entry should be in the form  - event, date, time.
 If no date and time are given the event test is just displayed.
+
+The text can be made to scroll, this is done by doubling the text line
+and moving a sliding windows over the text.
 
 Also, contains the code to simulate the pressing of F15 - to keep monitors awake.
 
+
+The softwate is issued under the GNU General Public License v3 (GPL-3).
 
 You may copy, distribute and modify the software as long as you
 track changes/dates in source files. Any modifications to or software
@@ -75,6 +80,8 @@ var
   appStartTime   : int64;          //  used by formAbout to determine how long the app has been running.
   lines          : TStringList;
   scrollPos      : integer;
+  debug          : Boolean;
+  debugFle       : text;
 
 implementation
 
@@ -87,6 +94,11 @@ procedure TfrmlazKlockLite.FormClose(Sender: TObject;
 begin
   tmrKlock.Enabled := false;
   lines.Free;
+
+  if debug then begin
+    writeLn(debugFle, format ('%s : log file Closed', [timeToStr(now)]));
+    CloseFile(debugFle);
+  end;
 end;
 
 procedure TfrmlazKlockLite.FormDestroy(Sender: TObject);
@@ -94,21 +106,37 @@ begin
   // To prevent possible system resource leaks
   Application.RemoveOnUserInputHandler(@MouseHook);
 
-  //userOptions.writeCurrentOptions;  // write out options file.
-  //userOptions.Free;
+  UserOptions.formTop  := frmlazKlockLite.Top;
+  UserOptions.formLeft := frmlazKlockLite.Left;
+
+  userOptions.writeCurrentOptions;  // write out options file.
+  userOptions.Free;
 end;
 
 procedure TfrmlazKlockLite.FormCreate(Sender: TObject);
+VAR
+  DebugFleName : String;
 begin
+  debug := false ;
+
+  if debug then begin
+    DebugFleName := 'debug.log';
+    assignfile(debugFle, DebugFleName);
+    rewrite(debugFle);
+    writeLn(debugFle, format ('%s : %s Created', [timeToStr(now), DebugFleName]));
+  end;
+
   Application.AddOnUserInputHandler(@MouseHook);
 
   appStartTime := GetTickCount64;  //  tick count when application starts.
   userOptions  := Options.Create;  // create options file as c:\Users\<user>\AppData\Local\Stub\Options.xml
 
-  lines            := TStringList.create;
-  tmrKlock.Enabled := true;
-  ledKlock.Caption := FormatDateTime('hh:nn', now);
-  scrollPos        := 1;
+  frmlazKlockLite.Top  := UserOptions.formTop;
+  frmlazKlockLite.Left := UserOptions.formLeft;
+  lines                := TStringList.create;
+  tmrKlock.Enabled     := true;
+  ledKlock.Caption     := FormatDateTime('hh:nn', now);
+  scrollPos            := 1;
 
   loadEvents;
   tmrKlockTimer(Sender);
@@ -149,6 +177,10 @@ begin
 end;
 
 procedure TfrmlazKlockLite.loadEvents;
+{  Loads the events from a text file, if present.
+   The events file shpuld be called events.txt and reside in the
+   same directory has the executable.
+}
 begin
   try
     lines.LoadFromFile('events.txt');
@@ -168,6 +200,7 @@ var
   sTime   : string;
   line    : string;
   eName   : string;
+  oLength : integer;
   flag    : boolean;
   eDate   : TDateTime;
   timediff: TDateTime;
@@ -191,10 +224,9 @@ begin
         eDate    := StrToDate(split[1]) + StrToTime(split[2]);
         timeDiff := eDate - Now;
         flag     := true;
-      except  //  no date ot time set.
+      except  //  no date on time set.
         flag := false;
       end;
-
 
       if mnItmScroll.Checked then
       begin
@@ -215,16 +247,20 @@ begin
       else  //  no date or time set - so just use name.
         display  += eName;
 
-    end;
-  end;
+    end;  //  for line in lines do
+  end;    //  if lines.Count <> 0 then
 
   if mnItmScroll.Checked then
   begin
+    oLength := length(display) + 4;  //  We add 4 for the 4 spaces on the next line.
     display := display + '    ' + display;
     ledKlock.Caption := Copy(display, scrollPos, NO_OF_COLUMNS);
 
+    if debug then
+      writeLn(debugFle, format('scrollPos = %d :: %d :: %s ', [scrollPos, oLength, ledKlock.Caption]));
+
     inc(scrollPos);
-    if scrollPos > (length(display) / 2) then scrollPos := 1;
+    if scrollPos > oLength then scrollPos := 1;
   end
   else
     ledKlock.Caption := display;
