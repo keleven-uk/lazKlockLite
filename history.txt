@@ -14,6 +14,10 @@ Also, contains the code to simulate the pressing of F15 - to keep monitors awake
 
 Build 2
 
+commit 48d43711630cc75fd902f58f5109f0a342f46686
+Author: keleven-uk <github@keleven.co.uk>
+Date:   Sun Dec 9 21:57:43 2018 +0000
+
 Added formAbout & formLicence.
 Added uOptions & uLazKlockLite - so properties work.
 
@@ -24,7 +28,20 @@ Added to uLaxKlockLite - menu items to call about and licence forms.
 
 Build 3
 
+commit dd58fca67709027bc24ff45048b8552b72fed259
+Author: keleven-uk <github@keleven.co.uk>
+Date:   Thu Feb 7 22:10:51 2019 +0000
+
 Added to uLaxKlockLite - Ability to write to debug.log.
 Added to uLaxKlockLite - Ability to save / restore screen position.
 Added to uLaxKlockLite - Corrected but with text scrolling, removed jump to
 start.
+
+
+Build 4
+
+Corrected memory leaks in uOptions.pas - not freeing fvi object.
+
+Corrected spelling.
+
+** Compiled with Lazarus V2.0.0.4 *

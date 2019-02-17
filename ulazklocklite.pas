@@ -99,18 +99,20 @@ begin
     writeLn(debugFle, format ('%s : log file Closed', [timeToStr(now)]));
     CloseFile(debugFle);
   end;
-end;
-
-procedure TfrmlazKlockLite.FormDestroy(Sender: TObject);
-begin
-  // To prevent possible system resource leaks
-  Application.RemoveOnUserInputHandler(@MouseHook);
 
   UserOptions.formTop  := frmlazKlockLite.Top;
   UserOptions.formLeft := frmlazKlockLite.Left;
 
   userOptions.writeCurrentOptions;  // write out options file.
   userOptions.Free;
+
+  CloseAction:= caFree;
+end;
+
+procedure TfrmlazKlockLite.FormDestroy(Sender: TObject);
+begin
+  // To prevent possible system resource leaks
+  Application.RemoveOnUserInputHandler(@MouseHook);
 end;
 
 procedure TfrmlazKlockLite.FormCreate(Sender: TObject);
@@ -178,7 +180,7 @@ end;
 
 procedure TfrmlazKlockLite.loadEvents;
 {  Loads the events from a text file, if present.
-   The events file shpuld be called events.txt and reside in the
+   The events file should be called events.txt and reside in the
    same directory has the executable.
 }
 begin
@@ -314,8 +316,8 @@ procedure TfrmlazKlockLite.pressF15;
 {  This simulates the pressing of the <CTRL F15> key.
    This is used to keep the monitor awake i.e. not going into sleep mode.
 
-   <CTRL F15> should be reconised by most systems, but is rarely used in applications.
-                                                   and does not appear on most keyboards.
+   <CTRL F15> should be recognised by most systems, but is rarely used in applications.
+                                                 and does not appear on most keyboards.
 }
 begin
   KeyInput.Apply([ssCtrl]);

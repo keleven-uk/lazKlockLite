@@ -250,41 +250,41 @@ implementation
       originalFileName := fvi.fileOriginalFileName;
       productName      := fvi.fileProductName;
       productVersion   := fvi.fileProductVersion;
-
-      try
-        // Read in xml file from disk
-        ReadXMLFile(Doc, optionsName);
-      except
-        on E: Exception do
-        begin
-          ShowMessage('ERROR: reading XML file.' + LineEnding
-                    + E.Message + LineEnding
-                    + 'Halting Program Execution');
-          Halt;
-        end;  //  on E:
-      end;    //  try
-
-      //  Global
-      PassNode := Doc.DocumentElement.FindNode('Global');
-
-      if assigned(PassNode) then
-      begin
-        rtn := readChild(PassNode, 'screenSave');
-        if rtn <> 'ERROR' then screenSave := StrToBool(rtn);
-        rtn := readChildAttribute(PassNode, 'formPosition', 'Top');
-        if rtn <> 'ERROR' then formTop := StrToInt(rtn);
-        rtn := readChildAttribute(PassNode, 'formPosition', 'Left');
-        if rtn <> 'ERROR' then formLeft := StrToInt(rtn);
-
-        rtn := readChild(PassNode, 'optionsName');
-        if rtn <> 'ERROR' then optionsName := ansistring(rtn);
-      end;
-
     finally
-      // finally, free the document
-      Doc.Free;
+      fvi.Free;
     end;
-  end;
+
+    try
+      // Read in xml file from disk
+      ReadXMLFile(Doc, optionsName);
+    except
+      on E: Exception do
+      begin
+        ShowMessage('ERROR: reading XML file.' + LineEnding
+                  + E.Message + LineEnding
+                  + 'Halting Program Execution');
+        Halt;
+      end;  //  on E:
+    end;    //  try
+
+    //  Global
+    PassNode := Doc.DocumentElement.FindNode('Global');
+
+    if assigned(PassNode) then
+    begin
+      rtn := readChild(PassNode, 'screenSave');
+      if rtn <> 'ERROR' then screenSave := StrToBool(rtn);
+      rtn := readChildAttribute(PassNode, 'formPosition', 'Top');
+      if rtn <> 'ERROR' then formTop := StrToInt(rtn);
+      rtn := readChildAttribute(PassNode, 'formPosition', 'Left');
+      if rtn <> 'ERROR' then formLeft := StrToInt(rtn);
+
+      rtn := readChild(PassNode, 'optionsName');
+      if rtn <> 'ERROR' then optionsName := ansistring(rtn);
+    end;
+
+    Doc.Free;
+END;
 
   procedure Options.writeDefaultOptions;
   {  Sets us some sensible defaults and then calls writeCurrentOptions to writs out the xml file.
@@ -308,6 +308,8 @@ implementation
     originalFileName := fvi.fileOriginalFileName;
     productName      := fvi.fileProductName;
     productVersion   := fvi.fileProductVersion;
+
+    fvi.Free;
 
     screenSave := True;
     formTop    := 100;              //  the forms top left.
@@ -370,6 +372,7 @@ implementation
       end;    //  try
 
     finally
+      fvi.Free;
       Doc.Free;
     end;
   end;
@@ -400,7 +403,7 @@ implementation
       fileProductName      := FileVerInfo.VersionStrings.Values['ProductName'];
       fileProductVersion   := FileVerInfo.VersionStrings.Values['ProductVersion'];
     finally
-          FileVerInfo.Free;
+      FileVerInfo.Free;
     end;
 
   end;

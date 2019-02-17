@@ -1,7 +1,7 @@
 object frmlazKlockLite: TfrmlazKlockLite
-  Left = 1266
+  Left = 1240
   Height = 102
-  Top = 207
+  Top = 188
   Width = 633
   VertScrollBar.Visible = False
   BorderIcons = []

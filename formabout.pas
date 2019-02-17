@@ -136,7 +136,7 @@ end;
 
 function TfrmAbout.FileSizeToHumanReadableString(fileSize: Int64): string;
 {  Returns filesize in a human readable form.
-   Does not use ther silly ISO standard unit of Pib, TiB, GiB, MiB & KiB.
+   Does not use their silly ISO standard unit of Pib, TiB, GiB, MiB & KiB.
    Used the good old fashion units of Pib, TB, GB, MB & KB.
 }
 

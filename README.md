@@ -13,4 +13,4 @@ and moving a sliding windows over the text.
 Also, contains the code to simulate the pressing of F15 - to keep monitors awake.
 
 
-The softwate is issued under the GNU General Public License v3 (GPL-3).
+The software is issued under the GNU General Public License v3 (GPL-3).
