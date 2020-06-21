@@ -45,3 +45,11 @@ Corrected memory leaks in uOptions.pas - not freeing fvi object.
 Corrected spelling.
 
 ** Compiled with Lazarus V2.0.0.4 *
+
+
+Build 5
+
+Added the ability to only count working days - excludes weekends and bank Holidays.
+  The Bank Holidays have to be manually added to a bankHolidays.txt.
+
+** Compiled with Lazarus V2.0.0.4 *

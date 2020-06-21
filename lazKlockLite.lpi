@@ -17,8 +17,9 @@
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <BuildNr Value="4"/>
-      <StringTable Comments="lazKlockLite@keleven.co.uk" CompanyName="www.keleven.co.uk" FileDescription="A light version of Klock, only contains a LED klock" InternalName="LazKlockLite" LegalCopyright="(c) Kevin Scott 2018 - 19" OriginalFilename="LazKlockLite" ProductName="LazKlockLite" ProductVersion="Build 4"/>
+      <BuildNr Value="5"/>
+      <Language Value="0809"/>
+      <StringTable Comments="lazKlockLite@keleven.co.uk" CompanyName="www.keleven.co.uk" FileDescription="A light version of Klock, only contains a LED klock" InternalName="LazKlockLite" LegalCopyright="(c) Kevin Scott 2018 - 2020" OriginalFilename="LazKlockLite" ProductName="LazKlockLite" ProductVersion="Build 5"/>
     </VersionInfo>
     <BuildModes Count="7">
       <Item1 Name="Default" Default="True"/>
@@ -257,10 +258,10 @@
     </RunParams>
     <RequiredPackages Count="4">
       <Item1>
-        <PackageName Value="bgracontrols"/>
+        <PackageName Value="eccontrols"/>
       </Item1>
       <Item2>
-        <PackageName Value="eccontrols"/>
+        <PackageName Value="bgracontrols"/>
       </Item2>
       <Item3>
         <PackageName Value="laz_visualplanit"/>

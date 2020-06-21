@@ -64,21 +64,26 @@ type
     WindowDragStarted : Boolean;
 
     procedure loadEvents;
+    procedure loadBankHolidays;
     procedure MouseHook(Sender: TObject; Msg: Cardinal);
     procedure pressF15;
     procedure setDisplay;
     function everyMinute(myNow: TdateTime; mins: integer): Boolean;
+    function calcWorkingDays(futureDate: TdateTime): integer;
+    function notBankHoliday(CurrDate: TdateTime): boolean;
   public
 
   end;
 
 CONST
-  NO_OF_COLUMNS = 50;
+  NO_OF_COLUMNS = 60;
 var
   frmlazKlockLite: TfrmlazKlockLite;
   userOptions    : Options;
   appStartTime   : int64;          //  used by formAbout to determine how long the app has been running.
   lines          : TStringList;
+  bankHolidaysStr: TStringList;
+  bankHolidays   : array of TDateTime; // Dynamic Array
   scrollPos      : integer;
   debug          : Boolean;
   debugFle       : text;
@@ -96,7 +101,7 @@ begin
   lines.Free;
 
   if debug then begin
-    writeLn(debugFle, format ('%s : log file Closed', [timeToStr(now)]));
+    writeLn(debugFle, format ('%s : Debug log Closed', [timeToStr(now)]));
     CloseFile(debugFle);
   end;
 
@@ -136,11 +141,14 @@ begin
   frmlazKlockLite.Top  := UserOptions.formTop;
   frmlazKlockLite.Left := UserOptions.formLeft;
   lines                := TStringList.create;
+  bankHolidaysStr      := TStringList.create;
   tmrKlock.Enabled     := true;
   ledKlock.Caption     := FormatDateTime('hh:nn', now);
   scrollPos            := 1;
 
   loadEvents;
+  loadBankHolidays;
+  setDisplay;
   tmrKlockTimer(Sender);
 end;
 
@@ -182,30 +190,67 @@ procedure TfrmlazKlockLite.loadEvents;
 {  Loads the events from a text file, if present.
    The events file should be called events.txt and reside in the
    same directory has the executable.
+
+   The format of the file -
+
+   name of event, date of event, time of event, only show working days
+
+   First first argument is mandtory, the remaing are optional.
 }
 begin
   try
     lines.LoadFromFile('events.txt');
   except
-    //  no events file - complain silently
+    //  no events file - complain silently.
   end;
-
-  setDisplay;
 end;
+
+procedure TfrmlazKlockLite.loadBankHolidays;
+{  Loads the BankHolidays from a text file, if present.
+   The BankHolidays file should be called BankHolidays.txt and reside in the
+   same directory has the executable.
+
+   This needs to be a list of bank holidat dates, from not to the latest date used.
+   The dates need to be in the format dd/mm/yyyy.  One date per line.
+}
+VAR
+  count       : integer;
+  bankHoliday : string;
+begin
+  count := 0;
+  try
+    bankHolidaysStr.LoadFromFile('BankHolidays.txt');
+
+    setLength(bankHolidays, bankHolidaysStr.count);  // size the dynamic array correctly.
+
+    for bankHoliday in bankHolidaysStr do
+    begin
+      bankHolidays[count] := StrToDate(bankHoliday);
+      inc(count);
+    end;
+  except
+    if debug then
+      writeLn(debugFle, 'Error loading holiday file')
+    //  no BankHolidays file - complain silently.
+  end;
+end;
+
 //
 //............................. timer ..........................................
 //
 procedure TfrmlazKlockLite.tmrKlockTimer(Sender: TObject);
 var
-  split   : TStringArray;
-  display : string;
-  sTime   : string;
-  line    : string;
-  eName   : string;
-  oLength : integer;
-  flag    : boolean;
-  eDate   : TDateTime;
-  timediff: TDateTime;
+  split       : TStringArray;
+  display     : string;
+  sTime       : string;
+  line        : string;
+  eName       : string;
+  eWorking    : string;
+  workingDays : integer;
+  oLength     : integer;
+  flag        : boolean;
+  eDate       : TDateTime;
+  timediff    : TDateTime;
 begin
   setDisplay;
 
@@ -224,9 +269,9 @@ begin
 
       try
         eDate    := StrToDate(split[1]) + StrToTime(split[2]);
-        timeDiff := eDate - Now;
+        eWorking := split[3];
         flag     := true;
-      except  //  no date on time set.
+      except  //  no date or time set.
         flag := false;
       end;
 
@@ -242,11 +287,24 @@ begin
       end;
 
       if flag then
-        display  += Format('%s : %d days %s',
-                         [eName,
-                          trunc(timediff),
-                          FormatDateTime('h" hrs "n" mins "s" secs"', timediff)])
-      else  //  no date or time set - so just use name.
+         if eWorking = ' True' then  //  eWorking set to True - ignore working days.
+         begin
+           workingDays := calcWorkingDays(eDate);
+           timeDiff    := eDate - Now;
+           display     += Format('%s : %d Working Days %s',
+                              [eName,
+                               workingDays,
+                               FormatDateTime('h" hrs "n" mins "s" secs"', timediff)])
+         end
+         else                      //  eWorking is either set to False or blank
+         begin
+           timeDiff := eDate - Now;
+           display  += Format('%s : %d days %s',
+                              [eName,
+                               trunc(timediff),
+                               FormatDateTime('h" hrs "n" mins "s" secs"', timediff)])
+         end  //  if eWorking = ' True' then
+      else    //  no date or time set - so just use name.  else of if flag then
         display  += eName;
 
     end;  //  for line in lines do
@@ -258,8 +316,8 @@ begin
     display := display + '    ' + display;
     ledKlock.Caption := Copy(display, scrollPos, NO_OF_COLUMNS);
 
-    if debug then
-      writeLn(debugFle, format('scrollPos = %d :: %d :: %s ', [scrollPos, oLength, ledKlock.Caption]));
+    //if debug then
+    //  writeLn(debugFle, format('scrollPos = %d :: %d :: %s ', [scrollPos, oLength, ledKlock.Caption]));
 
     inc(scrollPos);
     if scrollPos > oLength then scrollPos := 1;
@@ -331,14 +389,55 @@ procedure TfrmlazKlockLite.setDisplay;
 }
 begin
   if mnItmScroll.Checked then
-    ledKlock.Rows    := 1
+    ledKlock.Rows := 1
   else
-    ledKlock.Rows    := lines.Count + 1;
+    ledKlock.Rows := lines.Count + 1;
 
   ledKlock.Columns := NO_OF_COLUMNS;
 
   frmlazKlockLite.Width  := ledKlock.Width;
   frmlazKlockLite.Height := ledKlock.Height;
+end;
+
+function TfrmlazKlockLite.calcWorkingDays(futureDate: TdateTime): integer;
+{   Calculates to number or working days between two date.
+    i.e. ignores weekends.
+
+    Expects futureDate to be a date in the future.
+}
+var
+  CurrDate : TDateTime;
+
+begin
+  CurrDate := Now;
+  Result   := 0;
+  while (CurrDate <= futureDate) do
+  begin
+    // DayOfTheWeek returns 1-5 for Mon-Fri, so 6 and 7 are weekends
+    if (DayOfTheWeek(CurrDate) < 6) and (notBankHoliday(CurrDate)) then
+      Inc(Result);
+    CurrDate := CurrDate + 1;
+  end;
+end;
+
+function TfrmlazKlockLite.notBankHoliday(CurrDate: TdateTime): boolean;
+{  Checks Currdate against a list of known bank holidays.
+   Returns true if a match, else false.
+}
+VAR
+  bankHoliday : TDateTime;
+
+begin
+  result := True;
+
+  if Length(bankHolidays) <> 0 then  //  if list of known bank holidats does not exist.
+  begin
+    for bankHoliday in bankHolidays do
+    begin
+      if CompareDate(bankHoliday, CurrDate) = 0 then
+        result := False;
+    end;
+  end;
 end;
 
 end.

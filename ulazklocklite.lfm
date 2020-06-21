@@ -1,28 +1,28 @@
 object frmlazKlockLite: TfrmlazKlockLite
-  Left = 1240
+  Left = 813
   Height = 102
-  Top = 188
-  Width = 633
+  Top = 427
+  Width = 1020
   VertScrollBar.Visible = False
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'lazKlockLite'
   ClientHeight = 102
-  ClientWidth = 633
+  ClientWidth = 1020
   FormStyle = fsStayOnTop
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PopupMenu = PopupMenu1
-  LCLVersion = '2.0.0.4'
+  LCLVersion = '2.0.8.0'
   object ledKlock: TVpLEDLabel
     Left = 0
     Height = 30
     Top = 0
-    Width = 633
+    Width = 1020
     Align = alTop
     Caption = 'ledKlock'
-    Columns = 36
+    Columns = 60
     OffColor = 930866
     OnColor = clLime
   end
